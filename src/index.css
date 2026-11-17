@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Noto Serif Devanagari', serif;
+  }
+
+  /* Custom Royal Gold Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FFF8EC;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #C6A15B;
+    border-radius: 4px;
+    border: 2px solid #FFF8EC;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #842B43;
+  }
+}
+
+/* Subtle Shimmer Effect */
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.text-gold-shimmer {
+  background: linear-gradient(90deg, #9B752D 0%, #ECC880 50%, #9B752D 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: goldShimmer 4s linear infinite;
+}
