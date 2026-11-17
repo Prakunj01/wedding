@@ -12,8 +12,8 @@ export function App() {
         {/* Personalized Guest URL Routes (e.g. /invite/rahul-sharma, /invite/amit-family, /invite/prakunj-vishwakarma) */}
         <Route path="/invite/:guestSlug" element={<WeddingInvitationPage />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Short URL support — /prakunj works same as /invite/prakunj */}
+        <Route path="/:guestSlug" element={<WeddingInvitationPage />} />
       </Routes>
     </BrowserRouter>
   );
