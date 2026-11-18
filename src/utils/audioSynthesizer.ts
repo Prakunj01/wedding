@@ -23,17 +23,23 @@ class IndianWeddingAudioEngine {
   public async start(): Promise<boolean> {
     if (this.isPlaying) return true;
 
-    // 1. First, check if customAudioUrl or default '/song.mp3' exists and can play
-    const audioUrlToTry = this.customAudioUrl || '/song.mp3';
+    // 1. First, check if customAudioUrl or '/song.mpeg' or '/song.mp3' can play
+    const candidateUrls = [
+      this.customAudioUrl,
+      '/song.mpeg',
+      '/song.mp3',
+    ].filter(Boolean) as string[];
 
-    try {
-      const canPlayMp3 = await this.tryPlayMp3(audioUrlToTry);
-      if (canPlayMp3) {
-        this.isPlaying = true;
-        return true;
+    for (const url of candidateUrls) {
+      try {
+        const canPlay = await this.tryPlayMp3(url);
+        if (canPlay) {
+          this.isPlaying = true;
+          return true;
+        }
+      } catch (e) {
+        // try next candidate
       }
-    } catch (e) {
-      // ignore and proceed to Web Audio synthesizer
     }
 
     // 2. Fallback to built-in Web Audio Shehnai synthesizer
