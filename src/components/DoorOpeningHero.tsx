@@ -58,14 +58,14 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
       line3: 'अर्पिता संग रोहित',
     },
     {
-      bg: 'from-[#1A0A30] via-[#3B1F6A] to-[#2A0E50]',
+      bg: 'from-[#2A0E0E] via-[#842B43] to-[#3E2925]',
       icon: '💐',
       line1: 'कन्या पक्ष की ओर से',
       line2: 'सादर आमंत्रण',
       line3: 'विश्वकर्मा परिवार, खुरई',
     },
     {
-      bg: 'from-[#0D2318] via-[#1B4332] to-[#0D2318]',
+      bg: 'from-[#1A0800] via-[#3D2B00] to-[#1A0800]',
       icon: '✨',
       line1: 'शुभ विवाह',
       line2: '२५ नवंबर २०२६ — बुधवार',
@@ -227,7 +227,7 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
                 <div className="bg-ivory-soft border border-gold/30 rounded-xl px-3 py-2 mb-3 font-devanagari">
                   <p className="text-[10px] text-gold-dark font-medium">विशेष वैयक्तिक आमंत्रण</p>
                   <p className="text-sm sm:text-base font-bold text-burgundy leading-tight">
-                    {guest.title || 'प्रिय'} {guestDisplayName} {guest.honorific || 'जी'}
+                    {guest.title || 'श्रीमान/ श्रीमती'} {guestDisplayName} {guest.honorific || 'जी'}
                     {guest.familyNote && (
                       <span className="text-maroon font-normal text-xs"> ({guest.familyNote})</span>
                     )}

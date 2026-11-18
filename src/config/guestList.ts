@@ -155,7 +155,7 @@ export function getGuestFromSlug(rawSlug?: string | null): GuestInfo {
   return {
     slug: cleanSlug,
     hindiName: parsedHindiName,
-    title: 'प्रिय',
+    title: 'श्रीमान/ श्रीमती',
     honorific: 'जी',
     familyNote: 'सपरिवार',
     isCustom: true,

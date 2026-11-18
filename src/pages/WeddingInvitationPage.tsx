@@ -5,10 +5,8 @@ import { GuestInfo } from '../types';
 import { Navigation } from '../components/Navigation';
 import { DoorOpeningHero } from '../components/DoorOpeningHero';
 import { InvitationLetter } from '../components/InvitationLetter';
-import { CoupleProfile } from '../components/CoupleProfile';
 import { EventTimeline } from '../components/EventTimeline';
 import { VenueSection } from '../components/VenueSection';
-import { FamilySection } from '../components/FamilySection';
 import { GuestWishesWall } from '../components/GuestWishesWall';
 import { Footer } from '../components/Footer';
 import { AudioPlayer } from '../components/AudioPlayer';
@@ -69,17 +67,11 @@ export const WeddingInvitationPage: React.FC = () => {
       {/* Page 2: Bride Family's Official Invitation Message */}
       <InvitationLetter guest={guest} />
 
-      {/* Page 3: Bride and Groom Introduction Profiles with Custom Photo Upload */}
-      <CoupleProfile />
-
       {/* Page 4: Wedding Events & Vertical Timeline */}
       <EventTimeline />
 
       {/* Page 5: Wedding Venue & Animated Countdown */}
       <VenueSection />
-
-      {/* Page 6: Family Section (विनीत, दर्शनाभिलाषी, स्वागतार्थी, बाल मनुहार) */}
-      <FamilySection />
 
       {/* Page 7: Guest Wishes Wall & RSVP Blessings */}
       <GuestWishesWall guest={guest} />
