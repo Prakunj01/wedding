@@ -1,5 +1,5 @@
 // Web Audio API Indian Classical Shehnai & Tanpura Harmony Synthesizer
-// Guarantees soothing, royalty-free traditional wedding melodies without external URL dependencies.
+// Supports custom MP3 files (/song.mp3 in public folder) with automatic fallback to synthesized Shehnai.
 
 class IndianWeddingAudioEngine {
   private audioCtx: AudioContext | null = null;
@@ -10,7 +10,7 @@ class IndianWeddingAudioEngine {
   private customAudioUrl: string | null = null;
 
   constructor() {
-    // Lazy initialized on user click
+    // Lazy initialized on user interaction / auto-open
   }
 
   public setCustomAudioUrl(url: string) {
@@ -23,19 +23,66 @@ class IndianWeddingAudioEngine {
   public async start(): Promise<boolean> {
     if (this.isPlaying) return true;
 
+    // 1. First, check if customAudioUrl or default '/song.mp3' exists and can play
+    const audioUrlToTry = this.customAudioUrl || '/song.mp3';
+
     try {
-      // If user uploaded a custom MP3
-      if (this.customAudioUrl) {
-        if (!this.customAudio) {
-          this.customAudio = new Audio(this.customAudioUrl);
-          this.customAudio.loop = true;
-        }
-        await this.customAudio.play();
+      const canPlayMp3 = await this.tryPlayMp3(audioUrlToTry);
+      if (canPlayMp3) {
         this.isPlaying = true;
         return true;
       }
+    } catch (e) {
+      // ignore and proceed to Web Audio synthesizer
+    }
 
-      // Initialize Web Audio Context
+    // 2. Fallback to built-in Web Audio Shehnai synthesizer
+    return this.startSyntheticShehnai();
+  }
+
+  private tryPlayMp3(url: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const audio = new Audio(url);
+      audio.loop = true;
+
+      let resolved = false;
+
+      const handleSuccess = () => {
+        if (!resolved) {
+          resolved = true;
+          this.customAudio = audio;
+          this.isPlaying = true;
+          resolve(true);
+        }
+      };
+
+      const handleFailure = () => {
+        if (!resolved) {
+          resolved = true;
+          resolve(false);
+        }
+      };
+
+      audio.addEventListener('error', handleFailure, { once: true });
+
+      audio.play().then(() => {
+        handleSuccess();
+      }).catch((err) => {
+        handleFailure();
+      });
+
+      // Quick timeout fallback so site doesn't wait if file is not found
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve(false);
+        }
+      }, 1500);
+    });
+  }
+
+  private async startSyntheticShehnai(): Promise<boolean> {
+    try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) return false;
 
@@ -52,16 +99,16 @@ class IndianWeddingAudioEngine {
       this.masterGain.gain.exponentialRampToValueAtTime(0.25, this.audioCtx.currentTime + 3);
       this.masterGain.connect(this.audioCtx.destination);
 
-      // Start Tanpura Drone (Sa - Pa - Sa drone in C# / D)
+      // Start Tanpura Drone
       this.startTanpuraDrone();
 
-      // Start Shehnai Raag Melody Sequence (Raag Yaman / Bilawal Shubh Vivah theme)
+      // Start Shehnai Raag Melody Sequence
       this.startMelodySequence();
 
       this.isPlaying = true;
       return true;
     } catch (e) {
-      console.warn('Audio playback error:', e);
+      console.warn('Synthetic audio error:', e);
       return false;
     }
   }
@@ -104,21 +151,20 @@ class IndianWeddingAudioEngine {
     const noteGain = this.audioCtx.createGain();
     const filter = this.audioCtx.createBiquadFilter();
 
-    // Shehnai distinctive reedy timbre: Sawtooth + square with slight vibrato
     osc1.type = 'sawtooth';
     osc2.type = 'triangle';
 
     // Vibrato
     const vibrato = this.audioCtx.createOscillator();
     const vibratoGain = this.audioCtx.createGain();
-    vibrato.frequency.setValueAtTime(5.5, time); // 5.5Hz vibrato
+    vibrato.frequency.setValueAtTime(5.5, time);
     vibratoGain.gain.setValueAtTime(freq * 0.015, time);
     vibrato.connect(osc1.frequency);
     vibrato.connect(osc2.frequency);
     vibrato.start(time);
     vibrato.stop(time + duration);
 
-    // Subtle pitch glide (Meend) characteristic of Indian classical
+    // Pitch glide (Meend)
     osc1.frequency.setValueAtTime(freq * 0.98, time);
     osc1.frequency.exponentialRampToValueAtTime(freq, time + 0.12);
 
@@ -150,8 +196,6 @@ class IndianWeddingAudioEngine {
   private startMelodySequence() {
     if (!this.audioCtx) return;
 
-    // Auspicious Wedding Raag Yaman / Mangal Notes (in D):
-    // Sa (293.66), Re (329.63), Ga (369.99), Ma# (415.30), Pa (440.00), Dha (493.88), Ni (554.37), High Sa (587.33)
     const N = {
       Sa: 293.66,
       Re: 329.63,
@@ -165,7 +209,6 @@ class IndianWeddingAudioEngine {
       Ga2: 739.99,
     };
 
-    // Traditional Shehnai Mangal Dhun Motif
     const notesSequence = [
       { f: N.Ni, d: 0.8 },
       { f: N.Re, d: 0.8 },
@@ -175,7 +218,6 @@ class IndianWeddingAudioEngine {
       { f: N.Dha, d: 0.6 },
       { f: N.Ni, d: 0.8 },
       { f: N.Sa2, d: 2.0 },
-      // Second phrase (auspicious descent & ascent)
       { f: N.Ni, d: 0.7 },
       { f: N.Dha, d: 0.7 },
       { f: N.Pa, d: 1.2 },
@@ -183,7 +225,6 @@ class IndianWeddingAudioEngine {
       { f: N.Ga, d: 1.0 },
       { f: N.Re, d: 0.8 },
       { f: N.Sa, d: 2.2 },
-      // Third phrase (celebratory crescendo)
       { f: N.Ga, d: 0.6 },
       { f: N.Pa, d: 0.8 },
       { f: N.Sa2, d: 1.5 },
