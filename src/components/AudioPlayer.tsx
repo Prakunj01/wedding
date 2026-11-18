@@ -19,7 +19,16 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ autoPlayTriggered }) =
         }
       });
     }
-  }, [autoPlayTriggered]);
+
+    const checkInterval = setInterval(() => {
+      const active = weddingAudio.getIsPlaying();
+      if (active !== isPlaying) {
+        setIsPlaying(active);
+      }
+    }, 400);
+
+    return () => clearInterval(checkInterval);
+  }, [autoPlayTriggered, isPlaying]);
 
   const toggleMusic = async () => {
     if (isPlaying) {

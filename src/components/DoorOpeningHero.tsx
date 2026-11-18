@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { GuestInfo } from '../types';
 import { weddingData } from '../config/weddingData';
 import { GaneshaIcon, CornerOrnament, RoyalDivider } from './TraditionalIcons';
 import { GuestGreeting } from './GuestGreeting';
-import { ChevronDown, Calendar } from 'lucide-react';
+import { ChevronDown, Calendar, Sparkles, Volume2 } from 'lucide-react';
 import { weddingAudio } from '../utils/audioSynthesizer';
 
 interface DoorOpeningHeroProps {
@@ -19,24 +19,25 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
   onOpenInvitation,
   isOpen,
 }) => {
-  // State 1: has the curtain opening animation triggered?
   const [curtainsOpening, setCurtainsOpening] = useState(false);
-  // State 2: has the curtain completely finished and left the screen?
   const [curtainsFinished, setCurtainsFinished] = useState(false);
-  const [hasStartedAudio, setHasStartedAudio] = useState(false);
+  const audioStartedRef = useRef(false);
 
-  // Auto-open royal curtains slowly on landing
-  useEffect(() => {
-    // Stage 1: Hold closed for 800ms so the user sees the royal velvet gate & Ganesha
-    const triggerOpenTimer = setTimeout(() => {
+  // Play audio and launch opening sequence
+  const startCelebrationAndAudio = () => {
+    if (!audioStartedRef.current) {
+      audioStartedRef.current = true;
+      weddingAudio.start().catch(() => {});
+    }
+
+    if (!curtainsOpening) {
       setCurtainsOpening(true);
       onOpenInvitation();
 
-      // Launch celebratory royal flower/gold confetti as curtains begin to part
       try {
         confetti({
-          particleCount: 70,
-          spread: 85,
+          particleCount: 80,
+          spread: 90,
           origin: { y: 0.5 },
           colors: ['#C6A15B', '#ECC880', '#641C32', '#842B43', '#FFF8EC', '#FFD700'],
         });
@@ -44,38 +45,45 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
         // ignore
       }
 
-      // Try autoplaying Shehnai audio
-      if (!hasStartedAudio) {
-        weddingAudio.start().then((started) => {
-          if (started) {
-            setHasStartedAudio(true);
-          }
-        });
-      }
-    }, 800);
+      // Finish unmounting curtain after slow 2.8s animation
+      setTimeout(() => {
+        setCurtainsFinished(true);
+      }, 3200);
+    }
+  };
 
-    // Stage 2: After the slow 2.8s slide animation finishes (0.8s + 2.8s + 0.4s buffer = 4.0s), unmount the curtain overlay
-    const finishTimer = setTimeout(() => {
-      setCurtainsFinished(true);
-    }, 4000);
-
-    // Also trigger audio on any first user touch/click as fallback for strict browser autoplay policies
-    const handleFirstInteraction = () => {
-      if (!weddingAudio.getIsPlaying()) {
-        weddingAudio.start().then(() => setHasStartedAudio(true));
+  useEffect(() => {
+    // 1. Attempt immediate auto-play (works on browsers that permit it)
+    weddingAudio.start().then((started) => {
+      if (started) {
+        audioStartedRef.current = true;
       }
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+    }).catch(() => {});
+
+    // 2. Auto open curtains after 2.5s if user hasn't clicked yet
+    const autoTimer = setTimeout(() => {
+      startCelebrationAndAudio();
+    }, 2200);
+
+    // 3. User interaction listener: any tap/click/scroll immediately unlocks audio
+    const unlockAudioOnGesture = () => {
+      if (!audioStartedRef.current || !weddingAudio.getIsPlaying()) {
+        audioStartedRef.current = true;
+        weddingAudio.start().catch(() => {});
+      }
     };
 
-    window.addEventListener('click', handleFirstInteraction, { once: true });
-    window.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    window.addEventListener('click', unlockAudioOnGesture);
+    window.addEventListener('touchstart', unlockAudioOnGesture);
+    window.addEventListener('scroll', unlockAudioOnGesture, { once: true });
+    window.addEventListener('keydown', unlockAudioOnGesture, { once: true });
 
     return () => {
-      clearTimeout(triggerOpenTimer);
-      clearTimeout(finishTimer);
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      clearTimeout(autoTimer);
+      window.removeEventListener('click', unlockAudioOnGesture);
+      window.removeEventListener('touchstart', unlockAudioOnGesture);
+      window.removeEventListener('scroll', unlockAudioOnGesture);
+      window.removeEventListener('keydown', unlockAudioOnGesture);
     };
   }, []);
 
@@ -85,9 +93,15 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
       {/* ========================================================
           1. SLOW MAJESTIC ROYAL VELVET CURTAINS
           Slides apart smoothly over 2.8 seconds so animation is clearly visible
+          Clicking anywhere on it immediately starts sound & opens curtains
           ======================================================== */}
       {!curtainsFinished && (
-        <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+        <div
+          onClick={startCelebrationAndAudio}
+          className={`fixed inset-0 z-50 overflow-hidden cursor-pointer ${
+            curtainsOpening ? 'pointer-events-none' : 'pointer-events-auto'
+          }`}
+        >
           {/* Left Royal Velvet Curtain */}
           <motion.div
             initial={{ x: '0%' }}
@@ -96,7 +110,7 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
               duration: 2.8,
               ease: [0.65, 0, 0.35, 1], // Slow, majestic palace curtain easing
             }}
-            className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-[#20050D] via-[#4A1222] to-[#641C32] border-r-4 border-gold shadow-[15px_0_50px_rgba(0,0,0,0.8)] flex items-center justify-end pr-5 sm:pr-10"
+            className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-[#20050D] via-[#4A1222] to-[#641C32] border-r-4 border-gold shadow-[15px_0_50px_rgba(0,0,0,0.8)] flex items-center justify-end pr-5 sm:pr-10 select-none"
           >
             {/* Velvet Pleat Folds (Vertical depth lines) */}
             <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_30px,rgba(0,0,0,0.15)_30px,rgba(0,0,0,0.15)_60px)] opacity-70 pointer-events-none" />
@@ -119,7 +133,7 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
               duration: 2.8,
               ease: [0.65, 0, 0.35, 1], // Slow, majestic palace curtain easing
             }}
-            className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-[#20050D] via-[#4A1222] to-[#641C32] border-l-4 border-gold shadow-[-15px_0_50px_rgba(0,0,0,0.8)] flex items-center justify-start pl-5 sm:pl-10"
+            className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-[#20050D] via-[#4A1222] to-[#641C32] border-l-4 border-gold shadow-[-15px_0_50px_rgba(0,0,0,0.8)] flex items-center justify-start pl-5 sm:pl-10 select-none"
           >
             {/* Velvet Pleat Folds (Vertical depth lines) */}
             <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_30px,rgba(0,0,0,0.15)_30px,rgba(0,0,0,0.15)_60px)] opacity-70 pointer-events-none" />
@@ -128,28 +142,49 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
             <div className="absolute inset-y-0 left-2 w-1.5 bg-gradient-to-b from-transparent via-gold to-transparent opacity-90" />
             <div className="absolute inset-y-0 left-5 w-px bg-gradient-to-b from-transparent via-gold/40 to-transparent" />
 
-            {/* Traditional 'लाभ' / 'विवाह' Inscription */}
+            {/* Traditional 'विवाह' Inscription */}
             <div className="text-gold/30 text-5xl sm:text-8xl font-royalHindi select-none -rotate-90 origin-left drop-shadow-lg">
               विवाह
             </div>
           </motion.div>
 
-          {/* Center Medallion Emblem (fades out smoothly as curtains open) */}
+          {/* Center Medallion Emblem & Click Prompt */}
           <AnimatePresence>
             {!curtainsOpening && (
               <motion.div
                 initial={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.8 } }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.6 } }}
                 className="absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-4"
               >
+                {/* Ganesha Center */}
                 <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-burgundy via-maroon to-burgundy border-3 border-gold shadow-[0_0_50px_rgba(198,161,91,0.6)] flex items-center justify-center p-4">
                   <GaneshaIcon className="w-full h-full text-gold" size={80} />
                 </div>
+
                 <div className="mt-3 px-6 py-2 rounded-full bg-black/40 backdrop-blur-sm border border-gold/40">
                   <p className="font-royalHindi text-gold text-base sm:text-xl font-bold tracking-widest drop-shadow-md">
                     ॥ श्री गणेशाय नमः ॥
                   </p>
                 </div>
+
+                {/* Glowing Action Button to guarantee audio unlock on tap */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startCelebrationAndAudio();
+                  }}
+                  className="mt-6 inline-flex items-center gap-2.5 px-6 sm:px-8 py-3 rounded-full bg-gradient-to-r from-gold via-gold-light to-gold text-[#20050D] font-royalHindi text-sm sm:text-base font-bold shadow-[0_0_30px_rgba(212,175,55,0.7)] border-2 border-white/60 animate-bounce cursor-pointer"
+                >
+                  <Volume2 className="w-4 h-4 text-[#20050D]" />
+                  <span>पावन आमंत्रण खोलें</span>
+                  <Sparkles className="w-4 h-4 text-[#20050D]" />
+                </motion.button>
+
+                <p className="text-[11px] text-gold-pale/80 font-devanagari mt-2">
+                  (क्लिक करते ही शहनाई संगीत के साथ द्वार खुलेंगे)
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
