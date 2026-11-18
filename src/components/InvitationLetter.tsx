@@ -43,9 +43,6 @@ export const InvitationLetter: React.FC<{ guest: GuestInfo }> = ({ guest }) => {
             <span className="font-royalHindi text-gold-dark text-xl sm:text-2xl font-bold tracking-widest">
               ॥ श्री गणेशाय नमः ॥
             </span>
-            <span className="text-xs sm:text-sm text-maroon font-devanagari mt-1 font-semibold">
-              — वधू पक्ष की ओर से सप्रेम निमंत्रण —
-            </span>
           </motion.div>
 
           {/* Invitation Badge */}

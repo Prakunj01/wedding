@@ -30,7 +30,6 @@ export const Navigation: React.FC<NavigationProps> = ({
     { label: 'निमंत्रण पत्र', href: '#invitation-letter-section' },
     { label: 'कार्यक्रम', href: '#events-section' },
     { label: 'विवाह स्थल', href: '#venue-section' },
-    { label: 'आशीर्वाद', href: '#wishes-section' },
   ];
 
   const handleNavClick = (href: string) => {

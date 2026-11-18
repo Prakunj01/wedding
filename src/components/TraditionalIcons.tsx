@@ -1,41 +1,108 @@
 import React from 'react';
 
-// श्री गणेश जी का दिव्य मांगलिक प्रतीक (Lord Ganesha Auspicious Motif)
+// श्री गणेश जी का दिव्य एवं अत्यंत नयनाभिराम मांगलिक स्वरूप (Divine Ornate Royal Lord Ganesha)
 export const GaneshaIcon: React.FC<{ className?: string; size?: number }> = ({
-  className = "w-20 h-20 text-gold",
-  size = 80
+  className = "w-24 h-24 text-gold",
+  size = 96
 }) => (
   <svg
-    viewBox="0 0 100 100"
-    fill="currentColor"
+    viewBox="0 0 120 120"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
     className={className}
     width={size}
     height={size}
   >
-    {/* Halo / Aura */}
-    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6"/>
-    <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4"/>
+    <defs>
+      <linearGradient id="ganeshaGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#ECC880" />
+        <stop offset="50%" stopColor="#C6A15B" />
+        <stop offset="100%" stopColor="#8A6726" />
+      </linearGradient>
+      <radialGradient id="ganeshaAura" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#ECC880" stopOpacity="0.4" />
+        <stop offset="70%" stopColor="#C6A15B" stopOpacity="0.1" />
+        <stop offset="100%" stopColor="#C6A15B" stopOpacity="0" />
+      </radialGradient>
+      <filter id="ganeshaGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+
+    {/* Divine Aura / Radiant Prabhavali Halo */}
+    <circle cx="60" cy="58" r="54" fill="url(#ganeshaAura)" />
+    <circle cx="60" cy="58" r="50" stroke="url(#ganeshaGoldGrad)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+    <circle cx="60" cy="58" r="46" stroke="url(#ganeshaGoldGrad)" strokeWidth="1.5" opacity="0.8" />
     
-    {/* Mukut / Crown */}
-    <path d="M42 22 L50 12 L58 22 L54 26 L46 26 Z" fill="currentColor" />
-    <circle cx="50" cy="18" r="2" fill="#FFF8EC" />
-    
-    {/* Ganesha Mastak & Trunk (वक्रतुण्ड) */}
+    {/* Sun Rays / Aura Petals */}
+    {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
+      <line
+        key={deg}
+        x1="60"
+        y1="9"
+        x2="60"
+        y2="13"
+        stroke="url(#ganeshaGoldGrad)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        transform={`rotate(${deg} 60 58)`}
+      />
+    ))}
+
+    {/* Royal Ornate Mukut (Crown) */}
     <path
-      d="M36 34 C36 26, 64 26, 64 34 C64 42, 58 48, 56 56 C54 64, 62 66, 63 72 C64 78, 56 82, 50 82 C44 82, 42 76, 44 72 C46 68, 51 68, 50 62 C48 54, 42 48, 38 42 C36 39, 36 36, 36 34 Z"
-      fill="currentColor"
+      d="M48 30 L60 12 L72 30 L68 34 L52 34 Z"
+      fill="url(#ganeshaGoldGrad)"
+      filter="url(#ganeshaGlow)"
     />
-    
-    {/* Ears (कर्ण) */}
-    <path d="M36 32 C28 32, 24 40, 32 46 C35 48, 37 46, 37 42 Z" fill="currentColor" opacity="0.85" />
-    <path d="M64 32 C72 32, 76 40, 68 46 C65 48, 63 46, 63 42 Z" fill="currentColor" opacity="0.85" />
-    
-    {/* Tilak & Trishul Line */}
-    <path d="M49 28 L51 28 L51 38 L49 38 Z" fill="#641C32" />
-    <circle cx="50" cy="40" r="1.5" fill="#641C32" />
-    
-    {/* Modak in Trunk */}
-    <circle cx="62" cy="72" r="3.5" fill="#FFE599" stroke="currentColor" strokeWidth="1" />
+    <path d="M54 26 L60 17 L66 26 Z" fill="#641C32" />
+    <circle cx="60" cy="19" r="2" fill="#FFE599" />
+    <circle cx="60" cy="27" r="1.5" fill="#FFE599" />
+    {/* Crown Pearl Crest */}
+    <circle cx="60" cy="11" r="2.5" fill="#FFE599" stroke="url(#ganeshaGoldGrad)" strokeWidth="0.8" />
+
+    {/* Divine Ganesha Face & Slender Curved Trunk (वक्रतुण्ड) */}
+    <path
+      d="M42 42 C40 32, 80 32, 78 42 C77 52, 70 58, 67 68 C64 78, 74 81, 75 88 C76 96, 66 100, 58 100 C50 100, 48 93, 51 88 C54 83, 60 83, 59 75 C57 65, 49 58, 44 51 C42 47, 42 44, 42 42 Z"
+      fill="url(#ganeshaGoldGrad)"
+    />
+
+    {/* Broad Royal Ears (कर्ण) with Golden Jewellery */}
+    <path
+      d="M43 40 C31 40, 26 50, 36 58 C41 61, 44 58, 44 52 Z"
+      fill="url(#ganeshaGoldGrad)"
+      opacity="0.9"
+    />
+    <path
+      d="M77 40 C89 40, 94 50, 84 58 C79 61, 76 58, 76 52 Z"
+      fill="url(#ganeshaGoldGrad)"
+      opacity="0.9"
+    />
+    {/* Ear Kundal (Earrings) */}
+    <circle cx="33" cy="56" r="2" fill="#FFE599" />
+    <circle cx="87" cy="56" r="2" fill="#FFE599" />
+
+    {/* Sacred Eyes (सौम्य नयन) */}
+    <path d="M51 46 C53 45, 55 45, 57 47" stroke="#641C32" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M63 47 C65 45, 67 45, 69 46" stroke="#641C32" strokeWidth="1.5" strokeLinecap="round" />
+
+    {/* Sacred Trishul & Chandrakala Tilak (तिलक) */}
+    <path d="M58 35 L62 35 L62 48 L58 48 Z" fill="#641C32" />
+    <path d="M55 38 C58 41, 62 41, 65 38" stroke="#FFE599" strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="60" cy="50" r="2" fill="#641C32" />
+    <circle cx="60" cy="50" r="0.8" fill="#FFE599" />
+
+    {/* Golden Modak on Trunk Tip */}
+    <circle cx="75" cy="88" r="4.5" fill="#FFE599" stroke="#8A6726" strokeWidth="1" />
+    <path d="M73 86 L77 86 M73 88 L77 88 M73 90 L77 90" stroke="#8A6726" strokeWidth="0.5" />
+
+    {/* Little Golden Lotus Petal Beneath */}
+    <path
+      d="M45 106 C52 101, 68 101, 75 106 C70 110, 50 110, 45 106 Z"
+      fill="url(#ganeshaGoldGrad)"
+      opacity="0.85"
+    />
   </svg>
 );
 

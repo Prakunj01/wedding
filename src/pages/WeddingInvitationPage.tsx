@@ -7,7 +7,6 @@ import { DoorOpeningHero } from '../components/DoorOpeningHero';
 import { InvitationLetter } from '../components/InvitationLetter';
 import { EventTimeline } from '../components/EventTimeline';
 import { VenueSection } from '../components/VenueSection';
-import { GuestWishesWall } from '../components/GuestWishesWall';
 import { Footer } from '../components/Footer';
 import { AudioPlayer } from '../components/AudioPlayer';
 import { RosePetalsOverlay } from '../components/RosePetalsOverlay';
@@ -72,9 +71,6 @@ export const WeddingInvitationPage: React.FC = () => {
 
       {/* Page 5: Wedding Venue & Animated Countdown */}
       <VenueSection />
-
-      {/* Page 7: Guest Wishes Wall & RSVP Blessings */}
-      <GuestWishesWall guest={guest} />
 
       {/* Royal Footer */}
       <Footer />

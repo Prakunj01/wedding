@@ -5,7 +5,8 @@ import { GuestInfo } from '../types';
 import { weddingData } from '../config/weddingData';
 import { GaneshaIcon, CornerOrnament, RoyalDivider } from './TraditionalIcons';
 import { GuestGreeting } from './GuestGreeting';
-import { Sparkles, Heart, ChevronDown } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
+import { weddingAudio } from '../utils/audioSynthesizer';
 
 interface DoorOpeningHeroProps {
   guest: GuestInfo;
@@ -13,275 +14,125 @@ interface DoorOpeningHeroProps {
   isOpen: boolean;
 }
 
-// Floating particle component
-const FloatingParticle: React.FC<{ delay: number; x: number; size: number; symbol: string }> = ({ delay, x, size, symbol }) => (
-  <motion.div
-    className="absolute text-gold/30 select-none pointer-events-none"
-    style={{ left: `${x}%`, fontSize: size, bottom: '-10%' }}
-    animate={{ y: [0, -120, -240], opacity: [0, 0.6, 0] }}
-    transition={{ duration: 4 + Math.random() * 3, delay, repeat: Infinity, ease: 'easeOut' }}
-  >
-    {symbol}
-  </motion.div>
-);
-
 export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
   guest,
   onOpenInvitation,
   isOpen,
 }) => {
-  const [doorsOpening, setDoorsOpening] = useState(false);
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [slideStarted, setSlideStarted] = useState(false);
+  const [curtainsOpened, setCurtainsOpened] = useState(false);
+  const [hasStartedAudio, setHasStartedAudio] = useState(false);
 
-  // Auto-advance slides every 3.5s after first render
+  // Auto-open royal curtains on landing + attempt audio playback
   useEffect(() => {
-    if (isOpen) return;
-    const timer = setTimeout(() => setSlideStarted(true), 400);
-    return () => clearTimeout(timer);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!slideStarted || doorsOpening || isOpen) return;
-    const interval = setInterval(() => {
-      setSlideIndex(prev => (prev + 1) % slides.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [slideStarted, doorsOpening, isOpen]);
-
-  const slides = [
-    {
-      bg: 'from-[#360B17] via-[#641C32] to-[#4A1222]',
-      icon: '🪔',
-      line1: '॥ श्री गणेशाय नमः ॥',
-      line2: 'शुभ मंगल परिणय',
-      line3: 'अर्पिता संग रोहित',
-    },
-    {
-      bg: 'from-[#2A0E0E] via-[#842B43] to-[#3E2925]',
-      icon: '💐',
-      line1: 'कन्या पक्ष की ओर से',
-      line2: 'सादर आमंत्रण',
-      line3: 'विश्वकर्मा परिवार, खुरई',
-    },
-    {
-      bg: 'from-[#1A0800] via-[#3D2B00] to-[#1A0800]',
-      icon: '✨',
-      line1: 'शुभ विवाह',
-      line2: '२५ नवंबर २०२६ — बुधवार',
-      line3: 'चंद्रलोक मैरिज गार्डन, बिजावर',
-    },
-  ];
-
-  const handleOpenClick = () => {
-    setDoorsOpening(true);
-
-    confetti({
-      particleCount: 120,
-      spread: 100,
-      origin: { y: 0.5 },
-      colors: ['#C6A15B', '#ECC880', '#641C32', '#842B43', '#EAD5CF', '#FFD700'],
-    });
-    setTimeout(() => {
-      confetti({ particleCount: 60, angle: 60, spread: 70, origin: { x: 0, y: 0.6 }, colors: ['#C6A15B', '#ECC880'] });
-      confetti({ particleCount: 60, angle: 120, spread: 70, origin: { x: 1, y: 0.6 }, colors: ['#C6A15B', '#ECC880'] });
-    }, 300);
-
-    setTimeout(() => {
+    // Open curtains after a brief cinematic dramatic pause (600ms)
+    const openTimer = setTimeout(() => {
+      setCurtainsOpened(true);
       onOpenInvitation();
-      const nextSection = document.getElementById('invitation-letter-section');
-      if (nextSection) {
-        nextSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 900);
-  };
 
-  const isDefaultGuest = guest.slug === 'default' || !guest.hindiName;
-  const guestDisplayName = isDefaultGuest ? 'अतिथि' : guest.hindiName;
+      // Launch celebratory royal flower/gold confetti
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 80,
+          origin: { y: 0.5 },
+          colors: ['#C6A15B', '#ECC880', '#641C32', '#842B43', '#FFF8EC'],
+        });
+      } catch (e) {
+        // ignore
+      }
+
+      // Try autoplaying Shehnai audio
+      if (!hasStartedAudio) {
+        weddingAudio.start().then((started) => {
+          if (started) {
+            setHasStartedAudio(true);
+          }
+        });
+      }
+    }, 600);
+
+    // Also trigger audio on any first user touch/click as fallback for browser restrictions
+    const handleFirstInteraction = () => {
+      if (!weddingAudio.getIsPlaying()) {
+        weddingAudio.start().then(() => setHasStartedAudio(true));
+      }
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+
+    window.addEventListener('click', handleFirstInteraction, { once: true });
+    window.addEventListener('touchstart', handleFirstInteraction, { once: true });
+
+    return () => {
+      clearTimeout(openTimer);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, []);
 
   return (
-    <>
-      {/* 1. Full-Screen Cinematic Slide Preloader (Visible until opened) */}
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-ivory text-textDark px-3 sm:px-6 pt-24 sm:pt-28 pb-16">
+      
+      {/* ========================================================
+          1. ROYAL VELVET CURTAINS (Open smoothly to left & right on land)
+          ======================================================== */}
       <AnimatePresence>
-        {!isOpen && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.04 }}
-            transition={{ duration: 0.7, ease: 'easeInOut' }}
-            className="fixed inset-0 z-50 overflow-hidden select-none"
-          >
-            {/* === BACKGROUND: Animated Slide Carousel === */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={slideIndex}
-                initial={{ opacity: 0, scale: 1.08 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.9, ease: 'easeInOut' }}
-                className={`absolute inset-0 bg-gradient-to-br ${slides[slideIndex].bg}`}
-              />
-            </AnimatePresence>
-
-            {/* Floating particles */}
-            {['✿', '❀', '꧁', '❁', '🌸', '✦', '꧂', '❃'].map((sym, i) => (
-              <FloatingParticle key={i} delay={i * 0.6} x={8 + i * 11} size={16 + (i % 3) * 6} symbol={sym} />
-            ))}
-
-            {/* Decorative top & bottom gold bars */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-70" />
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-70" />
-
-            {/* Slide indicators */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSlideIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i === slideIndex ? 'bg-gold w-6' : 'bg-gold/30'}`}
-                />
-              ))}
-            </div>
-
-            {/* === SLIDING TEXT PANEL (bottom-up per slide) === */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-4">
-
-              {/* Top ornament */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="text-gold/50 text-3xl mb-4 tracking-[0.4em]"
-              >
-                ✦ ✦ ✦
-              </motion.div>
-
-              {/* Slide text — animates per slide */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={slideIndex}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -40 }}
-                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                  className="text-center mb-6"
-                >
-                  <p className="text-gold/70 text-sm font-devanagari tracking-widest mb-2 uppercase">
-                    {slides[slideIndex].line1}
-                  </p>
-                  <h2 className="text-gold text-4xl sm:text-5xl font-royalHindi font-bold drop-shadow-lg mb-2">
-                    {slides[slideIndex].line2}
-                  </h2>
-                  <p className="text-gold-pale/80 text-base sm:text-lg font-devanagari">
-                    {slides[slideIndex].line3}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-
-              {/* Central gold divider */}
-              <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.5, duration: 0.8 }}
-                className="w-48 h-px bg-gradient-to-r from-transparent via-gold to-transparent mb-6"
-              />
-
-              {/* White Invitation Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                animate={{ opacity: doorsOpening ? 0 : 1, y: doorsOpening ? -30 : 0, scale: doorsOpening ? 1.05 : 1 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-                className="relative max-w-sm w-[92%] bg-[#FFFDF8]/95 backdrop-blur-xl border-2 border-gold/70 rounded-3xl px-5 py-5 shadow-2xl text-center text-textDark"
-              >
-                <CornerOrnament position="top-left" />
-                <CornerOrnament position="top-right" />
-                <CornerOrnament position="bottom-left" />
-                <CornerOrnament position="bottom-right" />
-
-                {/* Ganesha */}
-                <div className="flex flex-col items-center mb-2">
-                  <motion.div
-                    animate={{ scale: [1, 1.07, 1], rotate: [0, 2, -2, 0] }}
-                    transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-                  >
-                    <GaneshaIcon className="w-14 h-14 sm:w-16 sm:h-16 text-burgundy" />
-                  </motion.div>
-                  <p className="font-royalHindi text-gold-dark text-sm font-bold tracking-widest mt-1">
-                    ॥ श्री गणेशाय नमः ॥
-                  </p>
-                </div>
-
-                {/* Badge */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gold/15 border border-gold/40 text-burgundy text-[11px] font-semibold font-devanagari mb-2">
-                  ✿ वधू पक्ष की ओर से सादर आमंत्रण ✿
-                </div>
-
-                {/* Couple name */}
-                <h1 className="text-2xl sm:text-3xl font-royalHindi font-bold text-burgundy tracking-wide mb-1">
-                  {weddingData.couple.title}
-                </h1>
-                <p className="font-royalHindi text-maroon text-sm font-semibold mb-2">
-                  शुभ मंगल परिणय
-                </p>
-
-                {/* Guest greeting */}
-                <div className="bg-ivory-soft border border-gold/30 rounded-xl px-3 py-2 mb-3 font-devanagari">
-                  <p className="text-[10px] text-gold-dark font-medium">विशेष वैयक्तिक आमंत्रण</p>
-                  <p className="text-sm sm:text-base font-bold text-burgundy leading-tight">
-                    {guest.title || 'श्रीमान/ श्रीमती'} {guestDisplayName} {guest.honorific || 'जी'}
-                    {guest.familyNote && (
-                      <span className="text-maroon font-normal text-xs"> ({guest.familyNote})</span>
-                    )}
-                  </p>
-                  <p className="text-[10px] text-textDark/70 mt-0.5">
-                    अर्पिता के शुभ विवाह समारोह में आपका हार्दिक स्वागत एवं अभिनंदन है।
-                  </p>
-                </div>
-
-                <div className="text-[11px] font-devanagari text-maroon font-semibold mb-3">
-                  शुभ लग्न: {weddingData.couple.weddingDateFormatted} ({weddingData.couple.dayHindi})
-                </div>
-
-                {/* Open Button */}
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: '0 0 24px rgba(198,161,91,0.6)' }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={handleOpenClick}
-                  disabled={doorsOpening}
-                  className="group relative inline-flex items-center gap-2 px-7 py-3 rounded-full bg-gradient-to-r from-burgundy via-maroon to-burgundy text-gold-pale font-royalHindi text-sm sm:text-base font-bold shadow-royal border-2 border-gold overflow-hidden w-full justify-center"
-                >
-                  <Sparkles className="w-4 h-4 text-gold-light group-hover:rotate-12 transition-transform" />
-                  <span>पावन आमंत्रण खोलें</span>
-                  <Heart className="w-4 h-4 text-gold-light fill-gold-light/40 group-hover:scale-125 transition-transform" />
-                  <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                </motion.button>
-
-                <p className="text-[9px] text-textDark/50 mt-1.5 font-devanagari">
-                  क्लिक करने पर शहनाई संगीत एवं संपूर्ण पत्रिका खुलेगी
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Curtain doors that slide on open */}
+        {!curtainsOpened && (
+          <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+            {/* Left Royal Velvet Curtain Door */}
             <motion.div
               initial={{ x: 0 }}
-              animate={{ x: doorsOpening ? '-100%' : 0 }}
-              transition={{ duration: 0.85, ease: [0.77, 0, 0.175, 1] }}
-              className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-black/60 to-black/20 pointer-events-none"
-            />
+              animate={{ x: '-100%' }}
+              transition={{ duration: 1.4, ease: [0.77, 0, 0.175, 1], delay: 0.5 }}
+              className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-[#360B17] via-[#641C32] to-[#4A1222] border-r-4 border-gold shadow-[10px_0_40px_rgba(0,0,0,0.6)] flex items-center justify-end pr-4 sm:pr-8"
+            >
+              {/* Golden Tassel & Filigree border */}
+              <div className="absolute inset-y-0 right-2 w-1 bg-gradient-to-b from-transparent via-gold to-transparent opacity-80" />
+              <div className="text-gold/40 text-4xl sm:text-7xl font-royalHindi select-none rotate-90 origin-right">
+                शुभ
+              </div>
+            </motion.div>
+
+            {/* Right Royal Velvet Curtain Door */}
             <motion.div
               initial={{ x: 0 }}
-              animate={{ x: doorsOpening ? '100%' : 0 }}
-              transition={{ duration: 0.85, ease: [0.77, 0, 0.175, 1] }}
-              className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-black/60 to-black/20 pointer-events-none"
-            />
-          </motion.div>
+              animate={{ x: '100%' }}
+              transition={{ duration: 1.4, ease: [0.77, 0, 0.175, 1], delay: 0.5 }}
+              className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-[#360B17] via-[#641C32] to-[#4A1222] border-l-4 border-gold shadow-[-10px_0_40px_rgba(0,0,0,0.6)] flex items-center justify-start pl-4 sm:pl-8"
+            >
+              {/* Golden Tassel & Filigree border */}
+              <div className="absolute inset-y-0 left-2 w-1 bg-gradient-to-b from-transparent via-gold to-transparent opacity-80" />
+              <div className="text-gold/40 text-4xl sm:text-7xl font-royalHindi select-none -rotate-90 origin-left">
+                विवाह
+              </div>
+            </motion.div>
+
+            {/* Central Golden Emblem while closed */}
+            <motion.div
+              initial={{ opacity: 1, scale: 1 }}
+              animate={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="absolute inset-0 flex flex-col items-center justify-center text-center z-10"
+            >
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-burgundy via-maroon to-burgundy border-2 border-gold shadow-2xl flex items-center justify-center p-3 animate-pulse">
+                <GaneshaIcon className="w-full h-full text-gold" size={72} />
+              </div>
+              <p className="font-royalHindi text-gold text-lg sm:text-xl font-bold tracking-widest mt-3 drop-shadow-md">
+                ॥ श्री गणेशाय नमः ॥
+              </p>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* 2. Main Hero Section (Clean, unobstructed, no middle lines) */}
-      <section
-        id="door-hero-section"
-        className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-ivory text-textDark px-4 pt-24 pb-16"
+      {/* ========================================================
+          2. THE ONE SINGLE ULTRA-RICH ROYAL INVITATION CARD
+          ======================================================== */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.9, delay: 0.6, ease: 'easeOut' }}
+        className="relative z-10 max-w-3xl w-full bg-[#FFFDF8] border-2 sm:border-3 border-gold/70 rounded-3xl p-5 sm:p-10 md:p-12 shadow-[0_15px_40px_rgba(100,28,50,0.12),0_0_50px_rgba(198,161,91,0.15)] text-center my-auto"
       >
         {/* Royal Corner Ornaments */}
         <CornerOrnament position="top-left" />
@@ -289,81 +140,78 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
         <CornerOrnament position="bottom-left" />
         <CornerOrnament position="bottom-right" />
 
-        {/* Main Royal Card Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 max-w-2xl w-full bg-white/80 backdrop-blur-md border-2 border-gold/50 rounded-3xl p-6 sm:p-10 shadow-card-royal text-center"
-        >
-          {/* Inner filigree border */}
-          <div className="absolute inset-2 border border-gold/30 rounded-2xl pointer-events-none" />
+        {/* Inner double filigree border */}
+        <div className="absolute inset-2 sm:inset-3 border border-gold/40 rounded-2xl pointer-events-none" />
+        <div className="absolute inset-3 sm:inset-5 border border-gold/20 rounded-xl pointer-events-none" />
 
-          {/* Shloka Ganesha */}
-          <div className="mb-4 flex flex-col items-center">
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-            >
-              <GaneshaIcon className="w-16 h-16 sm:w-20 sm:h-20 text-burgundy" />
-            </motion.div>
-            <p className="font-royalHindi text-gold-dark text-base sm:text-lg font-bold tracking-widest mt-1">
-              {weddingData.couple.shlokaGanesha}
-            </p>
-            <p className="text-xs sm:text-sm text-textDark/70 max-w-md mx-auto whitespace-pre-line mt-1 font-devanagari">
-              {weddingData.couple.shlokaMain}
-            </p>
-          </div>
+        {/* Lord Ganesha Divine Centerpiece */}
+        <div className="mb-4 sm:mb-6 flex flex-col items-center">
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="relative"
+          >
+            <GaneshaIcon className="w-24 h-24 sm:w-28 sm:h-28 text-gold drop-shadow-md" size={100} />
+          </motion.div>
 
-          <RoyalDivider className="my-3 sm:my-5" />
-
-          {/* Personalized Guest Greeting */}
-          <div className="my-5">
-            <GuestGreeting guest={guest} variant="hero" />
-          </div>
-
-          {/* Main Wedding Title */}
-          <div className="my-6 space-y-2">
-            <p className="text-xs sm:text-sm tracking-widest uppercase font-semibold text-gold-dark">
-              — कन्या पक्ष की ओर से सादर आमंत्रण —
-            </p>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-royalHindi font-bold text-burgundy tracking-wide drop-shadow-sm">
-              {weddingData.couple.title}
-            </h1>
-
-            <div className="flex items-center justify-center gap-2 text-gold-dark">
-              <span className="text-xs text-gold">◆</span>
-              <span className="font-royalHindi text-xl sm:text-2xl text-maroon font-semibold">
-                {weddingData.couple.subTitle}
-              </span>
-              <span className="text-xs text-gold">◆</span>
-            </div>
-
-            <div className="inline-block mt-3 px-5 py-2 rounded-xl bg-burgundy text-gold-light border border-gold font-devanagari text-base sm:text-lg font-semibold shadow-md">
-              शुभ लग्न: {weddingData.couple.weddingDateFormatted} ({weddingData.couple.dayHindi})
-            </div>
-          </div>
-
-          {/* Venue Teaser */}
-          <p className="text-xs sm:text-sm text-textDark/80 font-devanagari mt-2">
-            शुभ विवाह स्थल:{' '}
-            <span className="font-semibold text-burgundy">{weddingData.venue.name}</span>,{' '}
-            {weddingData.venue.city} ({weddingData.venue.district})
+          <p className="font-royalHindi text-gold-dark text-lg sm:text-xl md:text-2xl font-bold tracking-widest mt-2">
+            ॥ श्री गणेशाय नमः ॥
           </p>
 
-          {/* Scroll Down Indicator */}
-          <div className="mt-8 flex flex-col items-center">
-            <a
-              href="#invitation-letter-section"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gold/15 hover:bg-gold/25 text-burgundy text-xs sm:text-sm font-semibold font-devanagari transition-colors border border-gold/40 shadow-xs"
-            >
-              <span>संपूर्ण पत्रिका संदेश देखें</span>
-              <ChevronDown className="w-4 h-4 text-burgundy animate-bounce" />
-            </a>
+          <p className="text-xs sm:text-sm text-textDark/75 max-w-md mx-auto whitespace-pre-line mt-1.5 font-devanagari italic leading-relaxed">
+            {weddingData.couple.shlokaMain}
+          </p>
+        </div>
+
+        <RoyalDivider className="my-3 sm:my-5" />
+
+        {/* Personalized Guest Greeting */}
+        <div className="my-4 sm:my-6">
+          <GuestGreeting guest={guest} variant="hero" />
+        </div>
+
+        {/* Main Wedding Couple Title */}
+        <div className="my-5 sm:my-7 space-y-2.5">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-royalHindi font-bold text-burgundy tracking-wide drop-shadow-xs">
+            {weddingData.couple.title}
+          </h1>
+
+          <div className="flex items-center justify-center gap-2 text-gold-dark">
+            <span className="text-xs text-gold">◆</span>
+            <span className="font-royalHindi text-xl sm:text-2xl text-maroon font-semibold">
+              {weddingData.couple.subTitle}
+            </span>
+            <span className="text-xs text-gold">◆</span>
           </div>
-        </motion.div>
-      </section>
-    </>
+
+          <div className="inline-block mt-3 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-burgundy via-maroon to-burgundy text-gold-light border border-gold/70 font-devanagari text-sm sm:text-base md:text-lg font-bold shadow-royal">
+            शुभ लग्न: {weddingData.couple.weddingDateFormatted} ({weddingData.couple.dayHindi})
+          </div>
+        </div>
+
+        {/* Venue Teaser */}
+        <div className="p-3 sm:p-4 rounded-xl bg-ivory-soft border border-gold/30 max-w-lg mx-auto text-xs sm:text-sm text-textDark/85 font-devanagari">
+          <p className="font-semibold text-burgundy text-sm sm:text-base">
+            शुभ विवाह स्थल: {weddingData.venue.name}
+          </p>
+          <p className="text-textDark/70 mt-0.5">
+            {weddingData.venue.address}
+          </p>
+        </div>
+
+        {/* Scroll Down CTA */}
+        <div className="mt-8 flex flex-col items-center">
+          <a
+            href="#invitation-letter-section"
+            className="group inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-gold/20 via-gold/30 to-gold/20 hover:from-gold/30 hover:to-gold/40 text-burgundy text-xs sm:text-sm font-bold font-devanagari transition-all border border-gold/60 shadow-xs hover:shadow-gold-glow"
+          >
+            <Sparkles className="w-4 h-4 text-burgundy group-hover:rotate-12 transition-transform" />
+            <span>संपूर्ण निमंत्रण पत्रिका देखें</span>
+            <ChevronDown className="w-4 h-4 text-burgundy animate-bounce" />
+          </a>
+        </div>
+      </motion.div>
+    </div>
   );
 };
