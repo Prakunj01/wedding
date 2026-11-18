@@ -4,7 +4,6 @@ import { getGuestFromSlug } from '../config/guestList';
 import { GuestInfo } from '../types';
 import { Navigation } from '../components/Navigation';
 import { DoorOpeningHero } from '../components/DoorOpeningHero';
-import { InvitationLetter } from '../components/InvitationLetter';
 import { EventTimeline } from '../components/EventTimeline';
 import { VenueSection } from '../components/VenueSection';
 import { Footer } from '../components/Footer';
@@ -63,10 +62,7 @@ export const WeddingInvitationPage: React.FC = () => {
         />
       </div>
 
-      {/* Page 2: Bride Family's Official Invitation Message */}
-      <InvitationLetter guest={guest} />
-
-      {/* Page 4: Wedding Events & Vertical Timeline */}
+      {/* Page 2: Wedding Events & Vertical Timeline */}
       <EventTimeline />
 
       {/* Page 5: Wedding Venue & Animated Countdown */}

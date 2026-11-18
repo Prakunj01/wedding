@@ -5,7 +5,7 @@ import { GuestInfo } from '../types';
 import { weddingData } from '../config/weddingData';
 import { GaneshaIcon, CornerOrnament, RoyalDivider } from './TraditionalIcons';
 import { GuestGreeting } from './GuestGreeting';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Calendar } from 'lucide-react';
 import { weddingAudio } from '../utils/audioSynthesizer';
 
 interface DoorOpeningHeroProps {
@@ -19,23 +19,26 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
   onOpenInvitation,
   isOpen,
 }) => {
-  const [curtainsOpened, setCurtainsOpened] = useState(false);
+  // State 1: has the curtain opening animation triggered?
+  const [curtainsOpening, setCurtainsOpening] = useState(false);
+  // State 2: has the curtain completely finished and left the screen?
+  const [curtainsFinished, setCurtainsFinished] = useState(false);
   const [hasStartedAudio, setHasStartedAudio] = useState(false);
 
-  // Auto-open royal curtains on landing + attempt audio playback
+  // Auto-open royal curtains slowly on landing
   useEffect(() => {
-    // Open curtains after a brief cinematic dramatic pause (600ms)
-    const openTimer = setTimeout(() => {
-      setCurtainsOpened(true);
+    // Stage 1: Hold closed for 800ms so the user sees the royal velvet gate & Ganesha
+    const triggerOpenTimer = setTimeout(() => {
+      setCurtainsOpening(true);
       onOpenInvitation();
 
-      // Launch celebratory royal flower/gold confetti
+      // Launch celebratory royal flower/gold confetti as curtains begin to part
       try {
         confetti({
-          particleCount: 80,
-          spread: 80,
+          particleCount: 70,
+          spread: 85,
           origin: { y: 0.5 },
-          colors: ['#C6A15B', '#ECC880', '#641C32', '#842B43', '#FFF8EC'],
+          colors: ['#C6A15B', '#ECC880', '#641C32', '#842B43', '#FFF8EC', '#FFD700'],
         });
       } catch (e) {
         // ignore
@@ -49,9 +52,14 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
           }
         });
       }
-    }, 600);
+    }, 800);
 
-    // Also trigger audio on any first user touch/click as fallback for browser restrictions
+    // Stage 2: After the slow 2.8s slide animation finishes (0.8s + 2.8s + 0.4s buffer = 4.0s), unmount the curtain overlay
+    const finishTimer = setTimeout(() => {
+      setCurtainsFinished(true);
+    }, 4000);
+
+    // Also trigger audio on any first user touch/click as fallback for strict browser autoplay policies
     const handleFirstInteraction = () => {
       if (!weddingAudio.getIsPlaying()) {
         weddingAudio.start().then(() => setHasStartedAudio(true));
@@ -64,7 +72,8 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
     window.addEventListener('touchstart', handleFirstInteraction, { once: true });
 
     return () => {
-      clearTimeout(openTimer);
+      clearTimeout(triggerOpenTimer);
+      clearTimeout(finishTimer);
       window.removeEventListener('click', handleFirstInteraction);
       window.removeEventListener('touchstart', handleFirstInteraction);
     };
@@ -74,64 +83,86 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-ivory text-textDark px-3 sm:px-6 pt-24 sm:pt-28 pb-16">
       
       {/* ========================================================
-          1. ROYAL VELVET CURTAINS (Open smoothly to left & right on land)
+          1. SLOW MAJESTIC ROYAL VELVET CURTAINS
+          Slides apart smoothly over 2.8 seconds so animation is clearly visible
           ======================================================== */}
-      <AnimatePresence>
-        {!curtainsOpened && (
-          <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
-            {/* Left Royal Velvet Curtain Door */}
-            <motion.div
-              initial={{ x: 0 }}
-              animate={{ x: '-100%' }}
-              transition={{ duration: 1.4, ease: [0.77, 0, 0.175, 1], delay: 0.5 }}
-              className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-[#360B17] via-[#641C32] to-[#4A1222] border-r-4 border-gold shadow-[10px_0_40px_rgba(0,0,0,0.6)] flex items-center justify-end pr-4 sm:pr-8"
-            >
-              {/* Golden Tassel & Filigree border */}
-              <div className="absolute inset-y-0 right-2 w-1 bg-gradient-to-b from-transparent via-gold to-transparent opacity-80" />
-              <div className="text-gold/40 text-4xl sm:text-7xl font-royalHindi select-none rotate-90 origin-right">
-                शुभ
-              </div>
-            </motion.div>
+      {!curtainsFinished && (
+        <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden">
+          {/* Left Royal Velvet Curtain */}
+          <motion.div
+            initial={{ x: '0%' }}
+            animate={{ x: curtainsOpening ? '-100%' : '0%' }}
+            transition={{
+              duration: 2.8,
+              ease: [0.65, 0, 0.35, 1], // Slow, majestic palace curtain easing
+            }}
+            className="absolute left-0 top-0 bottom-0 w-1/2 bg-gradient-to-r from-[#20050D] via-[#4A1222] to-[#641C32] border-r-4 border-gold shadow-[15px_0_50px_rgba(0,0,0,0.8)] flex items-center justify-end pr-5 sm:pr-10"
+          >
+            {/* Velvet Pleat Folds (Vertical depth lines) */}
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_30px,rgba(0,0,0,0.15)_30px,rgba(0,0,0,0.15)_60px)] opacity-70 pointer-events-none" />
+            
+            {/* Golden Ornamental Border Stripe */}
+            <div className="absolute inset-y-0 right-2 w-1.5 bg-gradient-to-b from-transparent via-gold to-transparent opacity-90" />
+            <div className="absolute inset-y-0 right-5 w-px bg-gradient-to-b from-transparent via-gold/40 to-transparent" />
 
-            {/* Right Royal Velvet Curtain Door */}
-            <motion.div
-              initial={{ x: 0 }}
-              animate={{ x: '100%' }}
-              transition={{ duration: 1.4, ease: [0.77, 0, 0.175, 1], delay: 0.5 }}
-              className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-[#360B17] via-[#641C32] to-[#4A1222] border-l-4 border-gold shadow-[-10px_0_40px_rgba(0,0,0,0.6)] flex items-center justify-start pl-4 sm:pl-8"
-            >
-              {/* Golden Tassel & Filigree border */}
-              <div className="absolute inset-y-0 left-2 w-1 bg-gradient-to-b from-transparent via-gold to-transparent opacity-80" />
-              <div className="text-gold/40 text-4xl sm:text-7xl font-royalHindi select-none -rotate-90 origin-left">
-                विवाह
-              </div>
-            </motion.div>
+            {/* Traditional 'शुभ' Inscription */}
+            <div className="text-gold/30 text-5xl sm:text-8xl font-royalHindi select-none rotate-90 origin-right drop-shadow-lg">
+              शुभ
+            </div>
+          </motion.div>
 
-            {/* Central Golden Emblem while closed */}
-            <motion.div
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="absolute inset-0 flex flex-col items-center justify-center text-center z-10"
-            >
-              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-burgundy via-maroon to-burgundy border-2 border-gold shadow-2xl flex items-center justify-center p-3 animate-pulse">
-                <GaneshaIcon className="w-full h-full text-gold" size={72} />
-              </div>
-              <p className="font-royalHindi text-gold text-lg sm:text-xl font-bold tracking-widest mt-3 drop-shadow-md">
-                ॥ श्री गणेशाय नमः ॥
-              </p>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+          {/* Right Royal Velvet Curtain */}
+          <motion.div
+            initial={{ x: '0%' }}
+            animate={{ x: curtainsOpening ? '100%' : '0%' }}
+            transition={{
+              duration: 2.8,
+              ease: [0.65, 0, 0.35, 1], // Slow, majestic palace curtain easing
+            }}
+            className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-[#20050D] via-[#4A1222] to-[#641C32] border-l-4 border-gold shadow-[-15px_0_50px_rgba(0,0,0,0.8)] flex items-center justify-start pl-5 sm:pl-10"
+          >
+            {/* Velvet Pleat Folds (Vertical depth lines) */}
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_30px,rgba(0,0,0,0.15)_30px,rgba(0,0,0,0.15)_60px)] opacity-70 pointer-events-none" />
+
+            {/* Golden Ornamental Border Stripe */}
+            <div className="absolute inset-y-0 left-2 w-1.5 bg-gradient-to-b from-transparent via-gold to-transparent opacity-90" />
+            <div className="absolute inset-y-0 left-5 w-px bg-gradient-to-b from-transparent via-gold/40 to-transparent" />
+
+            {/* Traditional 'लाभ' / 'विवाह' Inscription */}
+            <div className="text-gold/30 text-5xl sm:text-8xl font-royalHindi select-none -rotate-90 origin-left drop-shadow-lg">
+              विवाह
+            </div>
+          </motion.div>
+
+          {/* Center Medallion Emblem (fades out smoothly as curtains open) */}
+          <AnimatePresence>
+            {!curtainsOpening && (
+              <motion.div
+                initial={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.8 } }}
+                className="absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-4"
+              >
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-burgundy via-maroon to-burgundy border-3 border-gold shadow-[0_0_50px_rgba(198,161,91,0.6)] flex items-center justify-center p-4">
+                  <GaneshaIcon className="w-full h-full text-gold" size={80} />
+                </div>
+                <div className="mt-3 px-6 py-2 rounded-full bg-black/40 backdrop-blur-sm border border-gold/40">
+                  <p className="font-royalHindi text-gold text-base sm:text-xl font-bold tracking-widest drop-shadow-md">
+                    ॥ श्री गणेशाय नमः ॥
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* ========================================================
           2. THE ONE SINGLE ULTRA-RICH ROYAL INVITATION CARD
           ======================================================== */}
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.9, delay: 0.6, ease: 'easeOut' }}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.2, delay: 0.4, ease: 'easeOut' }}
         className="relative z-10 max-w-3xl w-full bg-[#FFFDF8] border-2 sm:border-3 border-gold/70 rounded-3xl p-5 sm:p-10 md:p-12 shadow-[0_15px_40px_rgba(100,28,50,0.12),0_0_50px_rgba(198,161,91,0.15)] text-center my-auto"
       >
         {/* Royal Corner Ornaments */}
@@ -147,9 +178,9 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
         {/* Lord Ganesha Divine Centerpiece */}
         <div className="mb-4 sm:mb-6 flex flex-col items-center">
           <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
+            initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
             className="relative"
           >
             <GaneshaIcon className="w-24 h-24 sm:w-28 sm:h-28 text-gold drop-shadow-md" size={100} />
@@ -200,14 +231,14 @@ export const DoorOpeningHero: React.FC<DoorOpeningHeroProps> = ({
           </p>
         </div>
 
-        {/* Scroll Down CTA */}
+        {/* Scroll Down CTA to Events */}
         <div className="mt-8 flex flex-col items-center">
           <a
-            href="#invitation-letter-section"
+            href="#events-section"
             className="group inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-gold/20 via-gold/30 to-gold/20 hover:from-gold/30 hover:to-gold/40 text-burgundy text-xs sm:text-sm font-bold font-devanagari transition-all border border-gold/60 shadow-xs hover:shadow-gold-glow"
           >
-            <Sparkles className="w-4 h-4 text-burgundy group-hover:rotate-12 transition-transform" />
-            <span>संपूर्ण निमंत्रण पत्रिका देखें</span>
+            <Calendar className="w-4 h-4 text-burgundy group-hover:rotate-12 transition-transform" />
+            <span>मांगलिक कार्यक्रम देखें</span>
             <ChevronDown className="w-4 h-4 text-burgundy animate-bounce" />
           </a>
         </div>

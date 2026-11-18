@@ -26,9 +26,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   }, []);
 
   const navItems = [
-    { label: 'आरंभ', href: '#door-hero-section' },
-    { label: 'निमंत्रण पत्र', href: '#invitation-letter-section' },
-    { label: 'कार्यक्रम', href: '#events-section' },
+    { label: 'शुभ आमंत्रण', href: '#door-hero-section' },
+    { label: 'मांगलिक कार्यक्रम', href: '#events-section' },
     { label: 'विवाह स्थल', href: '#venue-section' },
   ];
 
